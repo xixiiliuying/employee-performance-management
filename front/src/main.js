@@ -1,9 +1,13 @@
 import Vue from 'vue'
 import App from '@/App.vue'
+
+
 // element ui 完全引入
 import ElementUI from 'element-ui'
 import '@/assets/css/element-variables.scss'
 import '@/assets/css/style.scss'
+import 'element-ui/lib/theme-chalk/index.css'
+Vue.use(ElementUI)
 // 加载路由
 // import router from '@/router/router-static.js';
 import router from '@/router/router-static.js';

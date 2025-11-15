@@ -12,7 +12,6 @@ public class R extends HashMap<String, Object> {
 	public R() {
 		put("code", 0);
 	}
-	
 	public static R error() {
 		return error(500, "未知异常，请联系管理员");
 	}

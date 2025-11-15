@@ -3,11 +3,49 @@
 
 <mapper namespace="com.dao.UserDao">
 
-    <select id="selectListView"
-		resultType="com.entity.UserEntity" >
-
-		SELECT  u.* FROM users  u 	        
-        <where> 1=1 ${ew.sqlSegment}</where>
+	<select id="selectListView" resultType="com.entity.UserEntity">
+		SELECT
+		staffs.*,
+		d.Dname as departmentName,
+		j.Jname as jobTitle
+		FROM staffs staffs
+		LEFT JOIN departments d ON staffs.dept_id = d.id
+		LEFT JOIN jobs j ON staffs.job_id = j.id
+		<where> 1=1 ${ew.sqlSegment}</where>
 	</select>
-	
+	<!-- 在 UserDao.xml 中添加 -->
+	<select id="selectUserWithDetail" resultType="com.entity.UserEntity">
+		SELECT
+		u.*,
+		d.Dname as departmentName,  <!-- 这里需要映射到UserEntity中的字段 -->
+		j.Jname as jobTitle         <!-- 这里需要映射到UserEntity中的字段 -->
+		FROM
+		staffs u
+		LEFT JOIN
+		departments d ON u.dept_id = d.id
+		LEFT JOIN
+		jobs j ON u.job_id = j.id
+		WHERE
+		u.id = #{userId}
+	</select>
+	<!-- 查询用户信息（包含部门岗位名称）返回 UserVO -->
+	<select id="selectUserVO" resultType="com.entity.vo.UserVO">
+		SELECT
+			s.Sid as sid,
+			s.Sname as sname,
+			s.gender as gender,
+			s.role as role,
+			s.hire_date as hireDate,
+			s.phone as phone,
+			s.email as email,
+			s.dept_id as deptId,
+			s.job_id as jobId,
+			d.Dname as deptName,
+			j.Jname as jobName
+		FROM staffs s
+				 LEFT JOIN departments d ON s.dept_id = d.id
+				 LEFT JOIN jobs j ON s.job_id = j.id
+		WHERE s.id = #{userId}
+	</select>
 </mapper>
+

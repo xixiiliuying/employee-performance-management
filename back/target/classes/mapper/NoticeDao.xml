@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dao.NoticeDao">
+
+	<!-- 基础结果映射 -->
+	<resultMap type="com.entity.NoticeEntity" id="NoticeMap">
+		<result property="id" column="id"/>
+		<result property="title" column="title"/>
+		<result property="image" column="image"/>
+		<result property="content" column="content"/>
+		<result property="publishDate" column="publish_date"/>
+		<result property="publisherId" column="publisher_id"/>
+		<result property="createTime" column="create_time"/>
+		<result property="updateTime" column="update_time"/>
+	</resultMap>
+
+	<!-- 视图结果映射，包含发布者姓名 -->
+	<resultMap type="com.entity.view.NoticeView" id="NoticeViewMap" extends="NoticeMap">
+		<result property="publisherName" column="publisher_name"/>
+	</resultMap>
+
+	<select id="selectListView" resultMap="NoticeViewMap">
+		SELECT
+		n.*,
+		s.Sname AS publisher_name
+		FROM notices n
+		LEFT JOIN staffs s ON n.publisher_id = s.id
+		<where>
+			1=1
+			<if test="ew != null and ew.sqlSegment != null and ew.sqlSegment != ''">
+				${ew.sqlSegment}
+			</if>
+		</where>
+	</select>
+
+	<select id="selectView" resultMap="NoticeViewMap">
+		SELECT
+		n.*,
+		s.Sname as publisher_name
+		FROM notices n
+		LEFT JOIN staffs s ON n.publisher_id = s.id
+		<where>
+			1=1
+			<if test="ew != null and ew.sqlSegment != null and ew.sqlSegment != ''">
+				AND ${ew.sqlSegment}
+			</if>
+		</where>
+	</select>
+
+</mapper>

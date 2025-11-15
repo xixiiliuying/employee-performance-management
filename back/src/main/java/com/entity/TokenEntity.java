@@ -7,50 +7,62 @@ import com.baomidou.mybatisplus.annotations.TableId;
 import com.baomidou.mybatisplus.annotations.TableName;
 import com.baomidou.mybatisplus.enums.IdType;
 
-/** 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import org.springframework.format.annotation.DateTimeFormat;
+
+/**
  * token表
  */
 @TableName("token")
 public class TokenEntity implements Serializable {
 	private static final long serialVersionUID = 1L;
-	
-	@TableId(type = IdType.AUTO)
-	private Long id;
-	
+
 	/**
-	 * 用户id
+	 * 主键id (AUTO_INCREMENT)
+	 */
+	@TableId(value = "id", type = IdType.AUTO)
+	private Long id;
+
+	/**
+	 * 员工id
 	 */
 	private Long userid;
-	
+
 	/**
 	 * 用户名
 	 */
 	private String username;
-	
+
 	/**
 	 * 表名
 	 */
 	private String tablename;
-	
+
 	/**
 	 * 角色
 	 */
 	private String role;
-	
+
 	/**
-	 * token
+	 * 令牌
 	 */
 	private String token;
-	
+
+	/**
+	 * 新增时间 (DEFAULT CURRENT_TIMESTAMP)
+	 */
+	@JsonFormat(locale = "zh", timezone = "GMT+8", pattern = "yyyy-MM-dd HH:mm:ss")
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	private Date createTime;
+
 	/**
 	 * 过期时间
 	 */
-	private Date expiratedtime;
-	
-	/**
-	 * 新增时间
-	 */
-	private Date addtime;
+	@JsonFormat(locale = "zh", timezone = "GMT+8", pattern = "yyyy-MM-dd HH:mm:ss")
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	private Date expiredTime;
+
+	// ==================== Getter and Setter ====================
 
 	public Long getId() {
 		return id;
@@ -68,6 +80,22 @@ public class TokenEntity implements Serializable {
 		this.userid = userid;
 	}
 
+	public String getUsername() {
+		return username;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+	public String getTablename() {
+		return tablename;
+	}
+
+	public void setTablename(String tablename) {
+		this.tablename = tablename;
+	}
+
 	public String getRole() {
 		return role;
 	}
@@ -80,53 +108,36 @@ public class TokenEntity implements Serializable {
 		return token;
 	}
 
-	public String getTablename() {
-		return tablename;
-	}
-
-	public void setTablename(String tablename) {
-		this.tablename = tablename;
-	}
-
 	public void setToken(String token) {
 		this.token = token;
 	}
 
-	public Date getExpiratedtime() {
-		return expiratedtime;
+	public Date getCreateTime() {
+		return createTime;
 	}
 
-	public void setExpiratedtime(Date expiratedtime) {
-		this.expiratedtime = expiratedtime;
+	public void setCreateTime(Date createTime) {
+		this.createTime = createTime;
 	}
 
-	public Date getAddtime() {
-		return addtime;
+	public Date getExpiredTime() {
+		return expiredTime;
 	}
 
-	public void setAddtime(Date addtime) {
-		this.addtime = addtime;
+	public void setExpiredTime(Date expiredTime) {
+		this.expiredTime = expiredTime;
 	}
 
-	public String getUsername() {
-		return username;
-	}
-
-	public void setUsername(String username) {
-		this.username = username;
-	}
-
-	public TokenEntity(Long userid, String username, String tablename,String role, String token, Date expiratedtime) {
-		super();
+	// 构造函数
+	public TokenEntity(Long userid, String username, String tablename, String role, String token, Date expiredTime) {
 		this.userid = userid;
 		this.username = username;
 		this.tablename = tablename;
 		this.role = role;
 		this.token = token;
-		this.expiratedtime = expiratedtime;
+		this.expiredTime = expiredTime;
 	}
-	
+
 	public TokenEntity() {
 	}
-	
 }

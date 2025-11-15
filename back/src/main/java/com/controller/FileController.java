@@ -75,7 +75,7 @@ public class FileController{
 		}
 		return R.ok().put("file", fileName);
 	}
-	
+
 	/**
 	 * 下载文件
 	 */
@@ -97,8 +97,8 @@ public class FileController{
 					getResponse().sendError(403);
 				}*/
 				HttpHeaders headers = new HttpHeaders();
-			    headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);    
-			    headers.setContentDispositionFormData("attachment", fileName);    
+			    headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+			    headers.setContentDispositionFormData("attachment", fileName);
 			    return new ResponseEntity<byte[]>(FileUtils.readFileToByteArray(file),headers, HttpStatus.CREATED);
 			}
 		} catch (IOException e) {
@@ -106,5 +106,5 @@ public class FileController{
 		}
 		return new ResponseEntity<byte[]>(HttpStatus.INTERNAL_SERVER_ERROR);
 	}
-	
+
 }

@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dao.LeaveRequestDao">
+
+    <!-- 基础结果映射 -->
+    <resultMap id="BaseResultMap" type="com.entity.LeaveRequestEntity">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="staff_id" property="staffId" jdbcType="BIGINT"/>
+        <result column="leave_type" property="leaveType" jdbcType="VARCHAR"/>
+        <result column="days" property="days" jdbcType="DECIMAL"/>
+        <result column="start_date" property="startDate" jdbcType="DATE"/>
+        <result column="end_date" property="endDate" jdbcType="DATE"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+        <result column="hr_id" property="hrId" jdbcType="BIGINT"/>
+        <result column="approval_time" property="approvalTime" jdbcType="TIMESTAMP"/>
+        <result column="reason" property="reason" jdbcType="VARCHAR"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!-- VO结果映射 -->
+    <resultMap id="VOResultMap" type="com.entity.vo.LeaveRequestVO">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="staff_id" property="staffId" jdbcType="BIGINT"/>
+        <result column="staff_name" property="staffName" jdbcType="VARCHAR"/>
+        <result column="leave_type" property="leaveType" jdbcType="VARCHAR"/>
+        <result column="days" property="days" jdbcType="DECIMAL"/>
+        <result column="start_date" property="startDate" jdbcType="DATE"/>
+        <result column="end_date" property="endDate" jdbcType="DATE"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+        <result column="hr_id" property="hrId" jdbcType="BIGINT"/>
+        <result column="approver_name" property="approverName" jdbcType="VARCHAR"/>
+        <result column="approval_time" property="approvalTime" jdbcType="TIMESTAMP"/>
+        <result column="reason" property="reason" jdbcType="VARCHAR"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="department_name" property="departmentName" jdbcType="VARCHAR"/>
+        <result column="job_name" property="jobName" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        id, staff_id, leave_type, days, start_date, end_date, status, hr_id, approval_time, reason, create_time
+    </sql>
+
+    <!-- 根据ID查询 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM leave_request
+        WHERE id = #{id}
+    </select>
+
+    <!-- 新增请假申请 -->
+    <insert id="insert" parameterType="com.entity.LeaveRequestEntity" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO leave_request (
+            staff_id, leave_type, days, start_date, end_date, status, hr_id, approval_time, reason, create_time
+        ) VALUES (
+                     #{staffId}, #{leaveType}, #{days}, #{startDate}, #{endDate}, #{status}, #{hrId}, #{approvalTime}, #{reason}, #{createTime}
+                 )
+    </insert>
+
+    <!-- 更新请假申请 -->
+    <update id="update" parameterType="com.entity.LeaveRequestEntity">
+        UPDATE leave_request
+        <set>
+            <if test="staffId != null">staff_id = #{staffId},</if>
+            <if test="leaveType != null">leave_type = #{leaveType},</if>
+            <if test="days != null">days = #{days},</if>
+            <if test="startDate != null">start_date = #{startDate},</if>
+            <if test="endDate != null">end_date = #{endDate},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="hrId != null">hr_id = #{hrId},</if>
+            <if test="approvalTime != null">approval_time = #{approvalTime},</if>
+            <if test="reason != null">reason = #{reason},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除请假申请 -->
+    <delete id="deleteById">
+        DELETE FROM leave_request WHERE id = #{id}
+    </delete>
+
+    <!-- 查询请假申请列表 -->
+    <select id="selectLeaveList" resultMap="VOResultMap" parameterType="map">
+        SELECT
+        lr.id,
+        lr.staff_id,
+        s.sname as staff_name,
+        lr.leave_type,
+        lr.days,
+        lr.start_date,
+        lr.end_date,
+        lr.status,
+        lr.hr_id,
+        hr.sname as approver_name,
+        lr.approval_time,
+        lr.reason,
+        lr.create_time,
+        d.dname as department_name,
+        j.jname as job_name
+        FROM leave_request lr
+        LEFT JOIN staffs s ON lr.staff_id = s.id
+        LEFT JOIN staffs hr ON lr.hr_id = hr.id
+        LEFT JOIN departments d ON s.dept_id = d.id
+        LEFT JOIN jobs j ON s.job_id = j.id
+        <where>
+            <if test="staffId != null">
+                AND lr.staff_id = #{staffId}
+            </if>
+            <if test="deptId != null">
+                AND s.dept_id = #{deptId}
+            </if>
+            <if test="status != null and status != ''">
+                AND lr.status = #{status}
+            </if>
+            <if test="leaveType != null and leaveType != ''">
+                AND lr.leave_type = #{leaveType}
+            </if>
+            <if test="startDate != null and startDate != ''">
+                AND lr.start_date >= #{startDate}
+            </if>
+            <if test="endDate != null and endDate != ''">
+                AND lr.end_date &lt;= #{endDate}
+            </if>
+            <if test="month != null and month != ''">
+                AND DATE_FORMAT(lr.start_date, '%Y-%m') = #{month}
+            </if>
+        </where>
+        ORDER BY lr.create_time DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- 查询请假申请总数 -->
+    <select id="countLeaveList" resultType="int" parameterType="map">
+        SELECT COUNT(*)
+        FROM leave_request lr
+        LEFT JOIN staffs s ON lr.staff_id = s.id
+        LEFT JOIN departments d ON s.dept_id = d.id
+        <where>
+            <if test="staffId != null">
+                AND lr.staff_id = #{staffId}
+            </if>
+            <if test="deptId != null">
+                AND s.dept_id = #{deptId}
+            </if>
+            <if test="status != null and status != ''">
+                AND lr.status = #{status}
+            </if>
+            <if test="leaveType != null and leaveType != ''">
+                AND lr.leave_type = #{leaveType}
+            </if>
+            <if test="startDate != null and startDate != ''">
+                AND lr.start_date >= #{startDate}
+            </if>
+            <if test="endDate != null and endDate != ''">
+                AND lr.end_date &lt;= #{endDate}
+            </if>
+            <if test="month != null and month != ''">
+                AND DATE_FORMAT(lr.start_date, '%Y-%m') = #{month}
+            </if>
+        </where>
+    </select>
+
+    <!-- 查询请假统计信息 -->
+    <select id="selectLeaveStatistics" resultType="map">
+        SELECT
+        COUNT(*) as totalApplications,
+        SUM(CASE WHEN status = '待审批' THEN 1 ELSE 0 END) as pendingCount,
+        SUM(CASE WHEN status = '已批准' THEN 1 ELSE 0 END) as approvedCount,
+        SUM(CASE WHEN status = '已拒绝' THEN 1 ELSE 0 END) as rejectedCount,
+        SUM(CASE WHEN status = '已批准' THEN days ELSE 0 END) as totalLeaveDays,
+        COUNT(DISTINCT staff_id) as totalStaff
+        FROM leave_request lr
+        LEFT JOIN staffs s ON lr.staff_id = s.id
+        <where>
+            <if test="month != null and month != ''">
+                AND DATE_FORMAT(lr.start_date, '%Y-%m') = #{month}
+            </if>
+            <if test="deptId != null">
+                AND s.dept_id = #{deptId}
+            </if>
+        </where>
+    </select>
+
+    <!-- 根据员工ID查询请假申请 -->
+    <select id="selectByStaffId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM leave_request
+        WHERE staff_id = #{staffId}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 查询待审批的请假申请 -->
+    <select id="selectPendingApplications" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM leave_request
+        WHERE status = '待审批'
+        ORDER BY create_time ASC
+    </select>
+
+    <!-- 查询员工某月的请假天数 -->
+    <select id="selectLeaveDaysByMonth" resultType="java.lang.Double">
+        SELECT COALESCE(SUM(days), 0)
+        FROM leave_request
+        WHERE staff_id = #{staffId}
+          AND status = '已批准'
+          AND DATE_FORMAT(start_date, '%Y-%m') = #{month}
+    </select>
+
+    <!-- 批量更新请假申请状态 -->
+    <update id="batchUpdateStatus">
+        UPDATE leave_request
+        SET status = #{status}
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+</mapper>

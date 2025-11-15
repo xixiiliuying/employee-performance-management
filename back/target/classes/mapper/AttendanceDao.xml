@@ -1,0 +1,389 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dao.AttendanceDao">
+
+    <!-- 基础结果映射 -->
+    <resultMap id="BaseResultMap" type="com.entity.AttendanceEntity">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="staff_id" property="staffId" jdbcType="BIGINT"/>
+        <result column="date" property="date" jdbcType="DATE"/>
+        <result column="check_in_time" property="checkInTime" jdbcType="TIME"/>
+        <result column="check_out_time" property="checkOutTime" jdbcType="TIME"/>
+        <result column="late_min" property="lateMin" jdbcType="INTEGER"/>
+        <result column="early_min" property="earlyMin" jdbcType="INTEGER"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+        <result column="reason" property="reason" jdbcType="VARCHAR"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!-- VO结果映射 -->
+    <resultMap id="VOResultMap" type="com.entity.vo.AttendanceVO">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="staff_id" property="staffId" jdbcType="BIGINT"/>
+        <result column="sname" property="staffName" jdbcType="VARCHAR"/>
+        <result column="date" property="date" jdbcType="DATE"/>
+        <result column="check_in_time" property="checkInTime" jdbcType="TIME"/>
+        <result column="check_out_time" property="checkOutTime" jdbcType="TIME"/>
+        <result column="late_min" property="lateMin" jdbcType="INTEGER"/>
+        <result column="early_min" property="earlyMin" jdbcType="INTEGER"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+        <result column="reason" property="reason" jdbcType="VARCHAR"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="departmentName" property="departmentName" jdbcType="VARCHAR"/>
+        <result column="jobName" property="jobName" jdbcType="VARCHAR"/>
+        <result column="absentDays" property="absentDays" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        id, staff_id, date, check_in_time, check_out_time, late_min, early_min, status, reason, create_time
+    </sql>
+
+    <!-- 根据ID查询 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM attendance
+        WHERE id = #{id}
+    </select>
+
+    <!-- 根据员工和日期查询 -->
+    <select id="selectByStaffAndDate" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM attendance
+        WHERE staff_id = #{staffId} AND date = #{date}
+    </select>
+
+    <!-- 新增考勤记录 -->
+    <insert id="insert" parameterType="com.entity.AttendanceEntity" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO attendance (
+            staff_id, date, check_in_time, check_out_time,
+            late_min, early_min, status, reason, create_time
+        ) VALUES (
+                     #{staffId}, #{date}, #{checkInTime}, #{checkOutTime},
+                     #{lateMin}, #{earlyMin}, #{status}, #{reason}, #{createTime}
+                 )
+    </insert>
+
+    <!-- 更新考勤记录 -->
+    <update id="update" parameterType="com.entity.AttendanceEntity">
+        UPDATE attendance
+        <set>
+            <if test="date != null">date = #{date},</if>
+            <if test="checkInTime != null">check_in_time = #{checkInTime},</if>
+            <if test="checkOutTime != null">check_out_time = #{checkOutTime},</if>
+            <if test="lateMin != null">late_min = #{lateMin},</if>
+            <if test="earlyMin != null">early_min = #{earlyMin},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="reason != null">reason = #{reason},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除考勤记录 -->
+    <delete id="deleteById">
+        DELETE FROM attendance WHERE id = #{id}
+    </delete>
+
+    <!-- 批量插入 -->
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO attendance (
+        staff_id, date, check_in_time, check_out_time,
+        late_min, early_min, status, reason, create_time
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.staffId}, #{item.date}, #{item.checkInTime}, #{item.checkOutTime},
+            #{item.lateMin}, #{item.earlyMin}, #{item.status}, #{item.reason}, #{item.createTime})
+        </foreach>
+    </insert>
+
+    <!-- 查询考勤记录列表 -->
+    <select id="selectAttendanceList" resultMap="VOResultMap" parameterType="map">
+        SELECT
+        a.id,
+        a.staff_id,
+        s.sname,
+        a.date,
+        a.check_in_time,
+        a.check_out_time,
+        a.late_min,
+        a.early_min,
+        a.status,
+        a.reason,  <!-- 🔥 添加 reason 字段 -->
+        a.create_time,
+        <!-- 🔥 添加部门和岗位字段 -->
+        d.dname as departmentName,
+        j.jname as jobName
+        FROM attendance a
+        LEFT JOIN staffs s ON a.staff_id = s.id
+        <!-- 🔥 添加部门和岗位关联 -->
+        LEFT JOIN departments d ON s.dept_id = d.id
+        LEFT JOIN jobs j ON s.job_id = j.id
+        <where>
+            <if test="staffId != null">
+                AND a.staff_id = #{staffId}
+            </if>
+            <if test="deptId != null">
+                AND s.dept_id = #{deptId}
+            </if>
+            <if test="status != null and status != ''">
+                AND a.status = #{status}
+            </if>
+            <if test="startDate != null and startDate != ''">
+                AND a.date >= #{startDate}
+            </if>
+            <if test="endDate != null and endDate != ''">
+                AND a.date &lt;= #{endDate}
+            </if>
+            <if test="month != null and month != ''">
+                AND DATE_FORMAT(a.date, '%Y-%m') = #{month}
+            </if>
+            <if test="date != null and date != ''">
+                AND a.date = #{date}
+            </if>
+            <if test="staffName != null and staffName != ''">
+                AND s.sname LIKE CONCAT('%', #{staffName}, '%')
+            </if>
+        </where>
+        ORDER BY a.date DESC, a.create_time DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- 查询考勤记录总数 -->
+    <select id="countAttendanceList" resultType="int" parameterType="map">
+        SELECT COUNT(*)
+        FROM attendance a
+        LEFT JOIN staffs s ON a.staff_id = s.id
+        <!-- 🔥 添加部门和岗位关联（虽然COUNT不需要字段，但保持JOIN条件一致） -->
+        LEFT JOIN departments d ON s.dept_id = d.id
+        LEFT JOIN jobs j ON s.job_id = j.id
+        <where>
+            <if test="staffId != null">
+                AND a.staff_id = #{staffId}
+            </if>
+            <if test="deptId != null">
+                AND s.dept_id = #{deptId}
+            </if>
+            <if test="status != null and status != ''">
+                AND a.status = #{status}
+            </if>
+            <if test="startDate != null and startDate != ''">
+                AND a.date >= #{startDate}
+            </if>
+            <if test="endDate != null and endDate != ''">
+                AND a.date &lt;= #{endDate}
+            </if>
+            <if test="month != null and month != ''">
+                AND DATE_FORMAT(a.date, '%Y-%m') = #{month}
+            </if>
+            <if test="staffName != null and staffName != ''">
+                AND s.sname LIKE CONCAT('%', #{staffName}, '%')
+            </if>
+        </where>
+    </select>
+
+    <!-- 根据日期范围查询个人考勤统计 -->
+    <select id="selectPersonalStatsByDateRange" resultType="map">
+        SELECT
+            COUNT(CASE WHEN a.status = '正常' THEN 1 END) as normalDays,
+            COUNT(CASE WHEN a.status = '迟到' THEN 1 END) as lateDays,
+            COUNT(CASE WHEN a.status = '早退' THEN 1 END) as earlyDays,
+            COUNT(CASE WHEN a.status = '缺勤' THEN 1 END) as absentDays,
+            COUNT(CASE WHEN a.status = '迟到早退' THEN 1 END) as lateEarlyDays,
+            COUNT(CASE WHEN a.status = '缺卡' THEN 1 END) as missingCardDays,
+            COUNT(*) as totalDays
+        FROM attendance a
+        WHERE a.staff_id = #{staffId}
+          AND a.date BETWEEN #{startDate} AND #{endDate}
+    </select>
+
+    <!-- 查询个人考勤统计 -->
+    <select id="selectPersonalStats" resultType="map">
+        SELECT
+            COUNT(*) as totalDays,
+            SUM(CASE WHEN status = '正常' THEN 1 ELSE 0 END) as normalDays,
+            SUM(CASE WHEN status = '迟到' THEN 1 ELSE 0 END) as lateDays,
+            SUM(CASE WHEN status = '早退' THEN 1 ELSE 0 END) as earlyDays,
+            SUM(CASE WHEN status = '迟到早退' THEN 1 ELSE 0 END) as lateEarlyDays,
+            SUM(CASE WHEN status = '缺卡' THEN 1 ELSE 0 END) as missingCardDays,
+            SUM(CASE WHEN status = '缺勤' THEN 1 ELSE 0 END) as absentDays
+        FROM attendance
+        WHERE staff_id = #{staffId}
+          AND DATE_FORMAT(date, '%Y-%m') = #{month}
+    </select>
+    <!-- 查询指定部门考勤统计 -->
+    <select id="selectSingleDepartmentStats" resultType="map">
+        SELECT
+            d.id as deptId,
+            d.dname as deptName,
+            COUNT(DISTINCT s.id) as totalStaff,
+            COUNT(DISTINCT a.staff_id) as attendedStaff,
+            COUNT(a.id) as totalRecords,
+            SUM(CASE WHEN a.status = '正常' THEN 1 ELSE 0 END) as normalRecords,
+            SUM(CASE WHEN a.status = '迟到' THEN 1 ELSE 0 END) as lateRecords,
+            SUM(CASE WHEN a.status = '早退' THEN 1 ELSE 0 END) as earlyRecords,
+            SUM(CASE WHEN a.status = '迟到早退' THEN 1 ELSE 0 END) as lateEarlyRecords,
+            SUM(CASE WHEN a.status = '缺卡' THEN 1 ELSE 0 END) as missingCardRecords,
+            SUM(CASE WHEN a.status = '缺勤' THEN 1 ELSE 0 END) as absentRecords,
+            CASE
+                WHEN COUNT(a.id) > 0 THEN
+                    ROUND(SUM(CASE WHEN a.status = '正常' THEN 1 ELSE 0 END) * 100.0 / COUNT(a.id), 2)
+                ELSE 0
+                END as normalRate
+        FROM departments d
+                 LEFT JOIN staffs s ON d.id = s.dept_id
+                 LEFT JOIN attendance a ON s.id = a.staff_id AND DATE_FORMAT(a.date, '%Y-%m') = #{month}
+        WHERE d.id = #{deptId}
+        GROUP BY d.id, d.dname
+    </select>
+
+    <!-- 查询所有部门考勤汇总 -->
+    <select id="selectAllDepartmentSummary" resultType="map">
+        SELECT
+            COUNT(DISTINCT d.id) as departmentCount,
+            COUNT(DISTINCT s.id) as totalStaff,
+            COUNT(DISTINCT a.staff_id) as attendedStaff,
+            COUNT(a.id) as totalRecords,
+            SUM(CASE WHEN a.status = '正常' THEN 1 ELSE 0 END) as normalRecords,
+            SUM(CASE WHEN a.status = '迟到' THEN 1 ELSE 0 END) as lateRecords,
+            SUM(CASE WHEN a.status = '早退' THEN 1 ELSE 0 END) as earlyRecords,
+            SUM(CASE WHEN a.status = '迟到早退' THEN 1 ELSE 0 END) as lateEarlyRecords,
+            SUM(CASE WHEN a.status = '缺卡' THEN 1 ELSE 0 END) as missingCardRecords,
+            SUM(CASE WHEN a.status = '缺勤' THEN 1 ELSE 0 END) as absentRecords,
+            CASE
+                WHEN COUNT(a.id) > 0 THEN
+                    ROUND(SUM(CASE WHEN a.status = '正常' THEN 1 ELSE 0 END) * 100.0 / COUNT(a.id), 2)
+                ELSE 0
+                END as normalRate
+        FROM departments d
+                 LEFT JOIN staffs s ON d.id = s.dept_id
+                 LEFT JOIN attendance a ON s.id = a.staff_id AND DATE_FORMAT(a.date, '%Y-%m') = #{month}
+    </select>
+
+    <!-- 查询月度考勤汇总 -->
+    <!-- 查询月度考勤汇总 -->
+    <select id="selectMonthlySummary" resultMap="VOResultMap">
+        SELECT
+            DATE_FORMAT(date, '%Y-%m-%d') as date,
+        COUNT(*) as totalRecords,
+        SUM(CASE WHEN status = '正常' THEN 1 ELSE 0 END) as normalCount,
+        SUM(CASE WHEN status = '迟到' THEN 1 ELSE 0 END) as lateCount,
+        SUM(CASE WHEN status = '早退' THEN 1 ELSE 0 END) as earlyCount,
+        SUM(CASE WHEN status = '迟到早退' THEN 1 ELSE 0 END) as lateEarlyDays,
+        SUM(CASE WHEN status = '缺卡' THEN 1 ELSE 0 END) as missingCardDays,
+        SUM(CASE WHEN status = '缺勤' THEN 1 ELSE 0 END) as absentCount
+        FROM attendance
+        WHERE DATE_FORMAT(date, '%Y-%m') = #{month}
+        GROUP BY date
+        ORDER BY date
+    </select>
+
+    <!-- 查询员工某月的考勤详情 -->
+    <select id="selectByStaffAndMonth" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM attendance
+        WHERE staff_id = #{staffId}
+        AND DATE_FORMAT(date, '%Y-%m') = #{month}
+        ORDER BY date
+    </select>
+
+
+
+    <!-- 查询迟到记录 -->
+    <select id="selectLateRecords" resultMap="VOResultMap">
+        SELECT
+        a.id,
+        a.staff_id,
+        s.sname,
+        a.date,
+        a.check_in_time,
+        a.late_min,
+        a.reason,  <!-- 🔥 添加 reason 字段 -->
+        d.dname as departmentName,
+        j.jname as jobName
+        FROM attendance a
+        LEFT JOIN staffs s ON a.staff_id = s.id
+        LEFT JOIN departments d ON s.dept_id = d.id
+        LEFT JOIN jobs j ON s.job_id = j.id
+        WHERE (a.status = '迟到' OR a.status = '迟到早退')
+        AND DATE_FORMAT(a.date, '%Y-%m') = #{month}
+        <if test="deptId != null">
+            AND s.dept_id = #{deptId}
+        </if>
+        ORDER BY a.date DESC, a.late_min DESC
+    </select>
+
+    <!-- 查询早退记录 -->
+    <select id="selectEarlyLeaveRecords" resultMap="VOResultMap">
+        SELECT
+        a.id,
+        a.staff_id,
+        s.sname,
+        a.date,
+        a.check_out_time,
+        a.early_min,
+        a.reason,  <!-- 🔥 添加 reason 字段 -->
+        d.dname as departmentName,
+        j.jname as jobName
+        FROM attendance a
+        LEFT JOIN staffs s ON a.staff_id = s.id
+        LEFT JOIN departments d ON s.dept_id = d.id
+        LEFT JOIN jobs j ON s.job_id = j.id
+        WHERE (a.status = '早退' OR a.status = '迟到早退')
+        AND DATE_FORMAT(a.date, '%Y-%m') = #{month}
+        <if test="deptId != null">
+            AND s.dept_id = #{deptId}
+        </if>
+        ORDER BY a.date DESC, a.early_min DESC
+    </select>
+
+    <!-- 查询缺勤记录 -->
+    <select id="selectAbsentRecords" resultMap="VOResultMap">
+        SELECT
+        s.id as staff_id,
+        s.sname,
+        d.dname as departmentName,
+        j.jname as jobName,
+        #{month} as date,
+        COUNT(*) as absentDays
+        FROM staffs s
+        LEFT JOIN departments d ON s.dept_id = d.id
+        LEFT JOIN jobs j ON s.job_id = j.id
+        WHERE s.id NOT IN (
+        SELECT DISTINCT staff_id
+        FROM attendance
+        WHERE DATE_FORMAT(date, '%Y-%m') = #{month}
+        AND date IS NOT NULL
+        )
+        AND s.id IS NOT NULL
+        <if test="deptId != null">
+            AND s.dept_id = #{deptId}
+        </if>
+        GROUP BY s.id, s.sname, d.dname, j.jname
+    </select>
+
+    <!-- 更新考勤状态 -->
+    <update id="updateStatus">
+        UPDATE attendance
+        SET status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 批量更新考勤记录 -->
+    <update id="batchUpdate" parameterType="java.util.List">
+        <foreach collection="list" item="item" separator=";">
+            UPDATE attendance
+            SET
+            check_in_time = #{item.checkInTime},
+            check_out_time = #{item.checkOutTime},
+            late_min = #{item.lateMin},
+            early_min = #{item.earlyMin},
+            status = #{item.status},
+            reason = #{item.reason}
+            WHERE id = #{item.id}
+        </foreach>
+    </update>
+
+</mapper>
