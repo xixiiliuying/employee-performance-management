@@ -77,7 +77,7 @@ public class LeaveRequestController {
      * 2. 验证申请状态是否为"待审批"
      * 3. 更新申请状态为"已撤销"
      */
-        @PostMapping("/cancel/{id}")
+    @PostMapping("/cancel/{id}")
     public R cancel(@PathVariable("id") Long id,
                     @LoginUser UserEntity user) {
         try {

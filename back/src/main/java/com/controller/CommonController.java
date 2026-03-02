@@ -104,12 +104,7 @@ public class CommonController{
 		return R.ok().put("data", com.alibaba.fastjson.JSONObject.parse(res.get("result").toString()));
 	}
     
-	/**
-	 * 获取table表中的column列表(联动接口)
-	 * @param table
-	 * @param column
-	 * @return
-	 */
+
 	@IgnoreAuth
 	@RequestMapping("/option/{tableName}/{columnName}")
 	public R getOption(@PathVariable("tableName") String tableName, @PathVariable("columnName") String columnName,String level,String parent) {
@@ -126,12 +121,7 @@ public class CommonController{
 		return R.ok().put("data", data);
 	}
 	
-	/**
-	 * 根据table中的column获取单条记录
-	 * @param table
-	 * @param column
-	 * @return
-	 */
+
 	@IgnoreAuth
 	@RequestMapping("/follow/{tableName}/{columnName}")
 	public R getFollowByOption(@PathVariable("tableName") String tableName, @PathVariable("columnName") String columnName, @RequestParam String columnValue) {
@@ -143,12 +133,7 @@ public class CommonController{
 		return R.ok().put("data", result);
 	}
 	
-	/**
-	 * 修改table表的sfsh状态
-	 * @param table
-	 * @param map
-	 * @return
-	 */
+
 	@RequestMapping("/sh/{tableName}")
 	public R sh(@PathVariable("tableName") String tableName, @RequestBody Map<String, Object> map) {
 		map.put("table", tableName);
@@ -156,14 +141,7 @@ public class CommonController{
 		return R.ok();
 	}
 	
-	/**
-	 * 获取需要提醒的记录数
-	 * @param tableName
-	 * @param columnName
-	 * @param type 1:数字 2:日期
-	 * @param map
-	 * @return
-	 */
+
 	@IgnoreAuth
 	@RequestMapping("/remind/{tableName}/{columnName}/{type}")
 	public R remindCount(@PathVariable("tableName") String tableName, @PathVariable("columnName") String columnName, 

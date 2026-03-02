@@ -159,12 +159,6 @@ public class DepartmentController {
     /**
      * 删除
      */
-    /**
-     * 删除
-     */
-    /**
-     * 删除
-     */
     @RequestMapping("/delete")
     public R delete(@RequestBody Long[] ids){
         try {
@@ -172,7 +166,7 @@ public class DepartmentController {
                 return R.error("请选择要删除的部门");
             }
 
-            // 🔥 直接删除，数据库会自动处理员工的外键
+
             boolean result = departmentService.deleteBatchByIds(Arrays.asList(ids));
             if (result) {
                 return R.ok("删除成功");

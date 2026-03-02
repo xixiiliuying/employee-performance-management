@@ -122,10 +122,6 @@
               style="width: 100%"
           ></el-date-picker>
         </el-form-item>
-
-        <el-form-item label="公告图片">
-          <el-input v-model="form.image" placeholder="请输入图片URL（可选）"></el-input>
-        </el-form-item>
       </el-form>
 
       <span slot="footer" class="dialog-footer">
@@ -171,6 +167,7 @@ export default {
       currentUser: null,
       loading: false,
       submitting: false,
+      searchKeyword: '',
       tableData: [],
       selectedRows: [],
 
@@ -255,7 +252,11 @@ export default {
         const params = {
           page: this.pagination.current,
           limit: this.pagination.size,
-          ...this.searchParams
+        }
+
+        // 使用 keyword 参数进行搜索
+        if (this.searchParams.title) {
+          params.keyword = this.searchParams.title.trim()
         }
 
         // 清理空参数
@@ -267,21 +268,27 @@ export default {
 
         console.log('公告列表请求参数:', params)
 
-        const response = await this.$http.get(API.url.notice.page, { params })
+        // 修改这里：使用 frontList 接口而不是 page 接口
+        const response = await this.$http.get('/notice/frontList', { params })
 
         console.log('公告列表响应:', response.data)
 
         if (response.data && response.data.code === 0) {
           const data = response.data.data
 
-          if (data && data.page) {
-            this.tableData = data.page.list || []
-            this.pagination.total = data.page.totalCount || 0
-            this.pagination.current = data.page.currPage || 1
-            this.pagination.size = data.page.pageSize || 10
+          // 调整数据解析逻辑
+          if (data && data.list) {
+            this.tableData = data.list || []
+            this.pagination.total = data.total || 0
+          } else if (data && data.records) {
+            this.tableData = data.records || []
+            this.pagination.total = data.total || 0
+          } else if (Array.isArray(data)) {
+            this.tableData = data
+            this.pagination.total = data.length
           } else {
-            this.tableData = data.list || data.records || []
-            this.pagination.total = data.total || this.tableData.length
+            this.tableData = []
+            this.pagination.total = 0
           }
 
           console.log('处理后的表格数据:', this.tableData)
@@ -300,9 +307,13 @@ export default {
       }
     },
 
-    // 搜索
+    // 修改搜索方法
     handleSearch() {
       this.pagination.current = 1
+      // 将搜索关键词转换为后端期望的参数名
+      if (this.searchParams.title) {
+        this.searchKeyword = this.searchParams.title
+      }
       this.loadTableData()
     },
 

@@ -718,8 +718,6 @@ export default {
       }
     },
 
-// 下载工资条
-    // 下载工资条
     // 下载工资条
     async downloadSalarySlip() {
       if (!this.selectedSalary) return
@@ -728,7 +726,7 @@ export default {
       try {
         this.$message.info('正在生成工资条，请稍候...')
 
-        // 使用修复后的 $http - 注意这里不要解构，直接获取完整response
+        // 使用修复后的 $http
         const response = await this.$http({
           url: API.url.salary.exportMySalary,
           method: 'get',
@@ -737,12 +735,6 @@ export default {
           },
           responseType: 'blob' // 重要：指定响应类型为 blob
         })
-
-        console.log('🔍 完整响应对象:', response)
-        console.log('🔍 响应数据类型:', typeof response.data)
-        console.log('🔍 是否是Blob:', response.data instanceof Blob)
-        console.log('🔍 Blob大小:', response.data.size)
-        console.log('🔍 Blob类型:', response.data.type)
 
         // 现在 response.data 应该是正确的 Blob 对象
         const blob = response.data
@@ -772,7 +764,7 @@ export default {
         this.$message.success('工资条下载成功')
 
       } catch (error) {
-        console.error('❌ 下载工资条失败:', error)
+        console.error('下载工资条失败:', error)
         this.$message.error('下载失败: ' + (error.message || '未知错误'))
       } finally {
         this.downloadLoading = false

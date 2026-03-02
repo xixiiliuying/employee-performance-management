@@ -353,7 +353,7 @@ export default {
       const now = new Date();
       const currentHour = now.getHours();
       // 只允许在6:00-12:00之间打卡
-      return currentHour >= 6 && currentHour < 12;
+      return currentHour >= 8 && currentHour < 11;
     },
     // 是否可以下班打卡
     canCheckOut() {
@@ -361,7 +361,7 @@ export default {
       const now = new Date();
       const currentHour = now.getHours();
       // 只允许在16:00-24:00之间打卡
-      return currentHour >= 16 || currentHour < 2;
+      return currentHour >= 16 || currentHour < 23;
     },
     // 工作时长
     workDuration() {

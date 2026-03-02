@@ -131,7 +131,7 @@ const routes = [
     {
         path: '/',
         name: '首页',
-        redirect: '/index'
+        redirect: '/login'
     },
     {
         path: '*',

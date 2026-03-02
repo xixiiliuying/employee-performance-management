@@ -430,18 +430,7 @@ public class UserController{
 	 */
 	@RequestMapping("/update")
 	public R update(@RequestBody UserEntity user){
-		System.out.println("=== 更新用户信息 ===");
-		System.out.println("用户ID: " + user.getId());
-		System.out.println("员工号: " + user.getSid());
-		System.out.println("姓名: " + user.getSname());
-		System.out.println("部门ID: " + user.getDeptId());
-		System.out.println("岗位ID: " + user.getJobId());
-		System.out.println("入职日期: " + user.getHireDate());
-		System.out.println("角色: " + user.getRole());
-		System.out.println("电话: " + user.getPhone());
-		System.out.println("邮箱: " + user.getEmail());
 
-		// 🔥 修复：正确的用户名重复检查逻辑
 		if (user.getSname() != null) {
 			UserEntity existingUser = userService.selectOne(
 					new EntityWrapper<UserEntity>()
@@ -455,7 +444,7 @@ public class UserController{
 		}
 
 		try {
-			// 🔥 修复：直接更新整个对象，但正确处理密码
+
 			UserEntity updateUser = new UserEntity();
 			updateUser.setId(user.getId());
 			updateUser.setSid(user.getSid());
@@ -463,7 +452,7 @@ public class UserController{
 			updateUser.setGender(user.getGender());
 			updateUser.setRole(user.getRole());
 
-			// 🔥 关键修复：确保这些字段被设置
+
 			updateUser.setDeptId(user.getDeptId());
 			updateUser.setJobId(user.getJobId());
 			updateUser.setHireDate(user.getHireDate());
@@ -474,7 +463,7 @@ public class UserController{
 			System.out.println("准备更新的岗位ID: " + updateUser.getJobId());
 			System.out.println("准备更新的入职日期: " + updateUser.getHireDate());
 
-			// 🔥 修复：密码处理逻辑
+
 			if (user.getPassword() != null && !user.getPassword().isEmpty()) {
 				// 检查密码是否被修改（不是加密后的密码）
 				if (!user.getPassword().startsWith("$2a$")) { // BCrypt加密密码的特征
@@ -485,7 +474,6 @@ public class UserController{
 				} else {
 					// 如果已经是加密密码，说明前端传回了原密码，不需要更新
 					System.out.println("密码未修改，保持原密码");
-					// 不设置密码字段，让数据库保持原密码
 				}
 			}
 
@@ -493,7 +481,7 @@ public class UserController{
 			boolean updateResult = userService.updateById(updateUser);
 			System.out.println("更新结果: " + updateResult);
 
-			// 🔥 新增：验证更新是否成功
+
 			if (updateResult) {
 				UserEntity updatedUser = userService.selectById(user.getId());
 				System.out.println("更新后验证 - 部门ID: " + updatedUser.getDeptId());

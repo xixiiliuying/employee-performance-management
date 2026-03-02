@@ -13,7 +13,7 @@
 		LEFT JOIN jobs j ON staffs.job_id = j.id
 		<where> 1=1 ${ew.sqlSegment}</where>
 	</select>
-	<!-- 在 UserDao.xml 中添加 -->
+
 	<select id="selectUserWithDetail" resultType="com.entity.UserEntity">
 		SELECT
 		u.*,

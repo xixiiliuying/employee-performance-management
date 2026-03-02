@@ -52,18 +52,15 @@ public class NoticeController {
         return R.ok().put("data", page);
     }
 
-    /**
-     * 前端列表 - 公告查看页面使用
-     */
     @RequestMapping("/list")
-    public R list(@RequestParam Map<String, Object> params,NoticeEntity notice,
+    public R list(@RequestParam Map<String, Object> params, NoticeEntity notice,
                   HttpServletRequest request){
         EntityWrapper<NoticeEntity> ew = new EntityWrapper<NoticeEntity>();
 
-        // 按发布日期倒序，最新的公告在前面
+        // 按发布日期倒序
         ew.orderBy("publish_date", false);
 
-        // 添加搜索条件
+        // 标题模糊搜索
         if (params.get("title") != null && !params.get("title").toString().trim().isEmpty()) {
             ew.like("title", params.get("title").toString().trim());
         }
@@ -72,10 +69,10 @@ public class NoticeController {
         if (params.get("startDate") != null && params.get("endDate") != null) {
             ew.between("publish_date", params.get("startDate"), params.get("endDate"));
         }
-
-        PageUtils page = noticeService.queryPage(params, MPUtil.sort(MPUtil.between(MPUtil.likeOrEq(ew, notice), params), params));
+        PageUtils page = noticeService.queryPage(params, MPUtil.sort(ew, params));
         return R.ok().put("data", page);
     }
+
 
     /**
      * 前端列表（带分页）- 专门为前端公告查看优化

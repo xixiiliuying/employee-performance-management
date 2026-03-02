@@ -2,6 +2,7 @@ com\resolver\LoginUserHandlerMethodArgumentResolver.class
 com\entity\model\JobModel.class
 com\entity\TokenEntity.class
 com\controller\SalaryController.class
+com\config\CorsConfig.class
 com\dao\SalaryDao.class
 com\utils\SQLFilter.class
 com\utils\ValidatorUtils.class
@@ -27,6 +28,7 @@ com\annotation\APPLoginUser.class
 com\entity\UserEntity.class
 com\annotation\LoginUser.class
 com\interceptor\AuthorizationInterceptor.class
+com\converter\LocalTimeStringConverter.class
 com\controller\LeaveRequestController.class
 com\entity\view\UserView.class
 com\service\AttendanceService.class

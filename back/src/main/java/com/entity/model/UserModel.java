@@ -11,7 +11,7 @@ import java.io.Serializable;
  * @email
  * @date 2021-05-07 10:42:31
  */
-public class UserModel implements Serializable {
+public class 		UserModel implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	/**

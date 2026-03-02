@@ -748,7 +748,7 @@ export default {
       return '未分配部门'
     },
 
-    // 加载统计信息 - 根据实际API响应修复
+    // 加载统计信息
     async loadStatistics() {
       this.loading = true
       try {

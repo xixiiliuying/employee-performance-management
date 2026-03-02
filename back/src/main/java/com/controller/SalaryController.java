@@ -165,17 +165,17 @@ public class SalaryController {
     @PostMapping("/updateStatus")
     public R updateStatus(@RequestBody Map<String, Object> params,
                           @LoginUser UserEntity user) {
-        System.out.println("🎯🎯🎯 updateStatus方法被调用了！🎯🎯🎯");
+        System.out.println("updateStatus方法被调用了！");
         System.out.println("当前用户: " + user.getSname() + ", 角色: " + user.getRole());
         System.out.println("接收到的参数: " + params);
 
         try {
             // 权限检查
             if (!"hr".equals(user.getRole())) {
-                System.out.println("❌ 权限检查失败: 用户角色不是HR");
+                System.out.println(" 权限检查失败: 用户角色不是HR");
                 return R.error("权限不足，仅HR可更新薪资状态");
             }
-            System.out.println("✅ 权限检查通过");
+            System.out.println(" 权限检查通过");
 
             // 打印参数详情
             Object idsObj = params.get("ids");
@@ -184,11 +184,11 @@ public class SalaryController {
             System.out.println("status参数: " + statusObj + " (类型: " + (statusObj != null ? statusObj.getClass().getSimpleName() : "null") + ")");
 
             salaryService.updateSalaryStatus(params);
-            System.out.println("✅ Service调用完成");
+            System.out.println(" Service调用完成");
             return R.ok("状态更新成功");
 
         } catch (Exception e) {
-            System.err.println("❌ Controller异常: " + e.getMessage());
+            System.err.println(" Controller异常: " + e.getMessage());
             e.printStackTrace();
             return R.error("状态更新失败: " + e.getMessage());
         }
