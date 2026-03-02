@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dao.DepartmentDao">
+
+	<!-- 基础结果映射 -->
+	<resultMap id="BaseResultMap" type="com.entity.DepartmentEntity">
+		<id column="id" property="id" jdbcType="BIGINT"/>
+		<result column="Dname" property="dname" jdbcType="VARCHAR"/>
+		<result column="manager_id" property="managerId" jdbcType="BIGINT"/>
+		<result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+	</resultMap>
+
+	<!-- DepartmentVO 结果映射 -->
+	<resultMap id="DepartmentVOResultMap" type="com.entity.vo.DepartmentVO">
+		<id column="id" property="id" jdbcType="BIGINT"/>
+		<result column="Dname" property="dname" jdbcType="VARCHAR"/>
+		<result column="manager_id" property="managerId" jdbcType="BIGINT"/>
+		<result column="manager_name" property="managerName" jdbcType="VARCHAR"/>
+		<result column="staff_count" property="staffCount" jdbcType="INTEGER"/>
+		<result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+	</resultMap>
+
+	<!-- DepartmentView 结果映射 -->
+	<resultMap id="DepartmentViewResultMap" type="com.entity.view.DepartmentView">
+		<id column="id" property="id" jdbcType="BIGINT"/>
+		<result column="Dname" property="dname" jdbcType="VARCHAR"/>
+		<result column="manager_id" property="managerId" jdbcType="BIGINT"/>
+		<result column="manager_name" property="managerName" jdbcType="VARCHAR"/>
+		<result column="staff_count" property="staffCount" jdbcType="INTEGER"/>
+		<result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+		<result column="manager_sid" property="managerSid" jdbcType="VARCHAR"/>
+		<result column="manager_job_name" property="managerJobName" jdbcType="VARCHAR"/>
+	</resultMap>
+
+	<!-- 基础列 -->
+	<sql id="Base_Column_List">
+		id, Dname, manager_id, create_time
+	</sql>
+
+	<!-- ==================== 基础CRUD操作 ==================== -->
+
+	<!-- 根据ID查询 -->
+	<select id="selectById" resultMap="BaseResultMap">
+		SELECT <include refid="Base_Column_List"/>
+		FROM departments
+		WHERE id = #{id}
+	</select>
+
+	<!-- 新增部门 -->
+	<insert id="insert" parameterType="com.entity.DepartmentEntity" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO departments (
+			Dname, manager_id, create_time
+		) VALUES (
+					 #{dname}, #{managerId}, #{createTime}
+				 )
+	</insert>
+
+	<!-- 更新部门 -->
+	<update id="update" parameterType="com.entity.DepartmentEntity">
+		UPDATE departments
+		<set>
+			<if test="dname != null">Dname = #{dname},</if>
+			<if test="managerId != null">manager_id = #{managerId},</if>
+			<if test="createTime != null">create_time = #{createTime},</if>
+		</set>
+		WHERE id = #{id}
+	</update>
+
+	<!-- 删除部门 -->
+	<delete id="deleteById">
+		DELETE FROM departments WHERE id = #{id}
+	</delete>
+
+	<!-- 查询部门列表（基础） -->
+	<select id="selectList" resultMap="BaseResultMap">
+		SELECT <include refid="Base_Column_List"/>
+		FROM departments
+		ORDER BY id ASC
+	</select>
+
+	<!-- ==================== VO相关查询 ==================== -->
+
+	<!-- 查询 DepartmentVO 列表 -->
+	<select id="selectListVO" resultMap="DepartmentVOResultMap">
+		SELECT
+		d.id,
+		d.Dname,
+		d.manager_id,
+		s.sname as manager_name,
+		(SELECT COUNT(*) FROM staffs WHERE dept_id = d.id) as staff_count,
+		d.create_time
+		FROM departments d
+		LEFT JOIN staffs s ON d.manager_id = s.id
+		<where> 1=1 ${ew.sqlSegment}</where>
+		ORDER BY d.id ASC
+	</select>
+
+	<!-- 查询单个 DepartmentVO -->
+	<select id="selectVO" resultMap="DepartmentVOResultMap">
+		SELECT
+		d.id,
+		d.Dname,
+		d.manager_id,
+		s.sname as manager_name,
+		(SELECT COUNT(*) FROM staffs WHERE dept_id = d.id) as staff_count,
+		d.create_time
+		FROM departments d
+		LEFT JOIN staffs s ON d.manager_id = s.id
+		<where> 1=1 ${ew.sqlSegment}</where>
+	</select>
+
+	<!-- ==================== View相关查询 ==================== -->
+
+	<!-- 查询 DepartmentView 列表 -->
+	<select id="selectListView" resultMap="DepartmentViewResultMap">
+		SELECT
+		d.id,
+		d.Dname,
+		d.manager_id,
+		s.sname as manager_name,
+		s.sid as manager_sid,
+		j.jname as manager_job_name,
+		(SELECT COUNT(*) FROM staffs WHERE dept_id = d.id) as staff_count,
+		d.create_time
+		FROM departments d
+		LEFT JOIN staffs s ON d.manager_id = s.id
+		LEFT JOIN jobs j ON s.job_id = j.id
+		<where> 1=1 ${ew.sqlSegment}</where>
+		ORDER BY d.id ASC
+	</select>
+
+	<!-- 查询单个 DepartmentView -->
+	<select id="selectView" resultMap="DepartmentViewResultMap">
+		SELECT
+		d.id,
+		d.Dname,
+		d.manager_id,
+		s.sname as manager_name,
+		(SELECT COUNT(*) FROM staffs WHERE dept_id = d.id) as staff_count,
+		d.create_time
+		FROM departments d
+		LEFT JOIN staffs s ON d.manager_id = s.id
+		<where> 1=1 ${ew.sqlSegment}</where>
+	</select>
+
+	<!-- ==================== 业务查询 ==================== -->
+
+	<!-- 根据部门名称查询 -->
+	<select id="selectByDname" resultMap="BaseResultMap">
+		SELECT <include refid="Base_Column_List"/>
+		FROM departments
+		WHERE Dname = #{dname}
+	</select>
+
+	<!-- 根据负责人ID查询部门 -->
+	<select id="selectByManagerId" resultMap="BaseResultMap">
+		SELECT <include refid="Base_Column_List"/>
+		FROM departments
+		WHERE manager_id = #{managerId}
+	</select>
+
+	<!-- 批量删除 -->
+	<delete id="deleteBatchIds">
+		DELETE FROM departments WHERE id IN
+		<foreach collection="list" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+
+	<!-- 查询部门数量 -->
+	<select id="selectCount" resultType="java.lang.Integer">
+		SELECT COUNT(*) FROM departments
+		<where> 1=1 ${ew.sqlSegment}</where>
+	</select>
+
+	<!-- 检查部门名称是否存在 -->
+	<select id="checkDnameExists" resultType="java.lang.Integer">
+		SELECT COUNT(*) FROM departments WHERE Dname = #{dname}
+		<if test="id != null">
+			AND id != #{id}
+		</if>
+	</select>
+
+	<!-- 更新部门负责人 -->
+	<update id="updateManager">
+		UPDATE departments
+		SET manager_id = #{managerId}
+		WHERE id = #{id}
+	</update>
+
+	<!-- 查询没有负责人的部门 -->
+	<select id="selectDepartmentsWithoutManager" resultMap="BaseResultMap">
+		SELECT <include refid="Base_Column_List"/>
+		FROM departments
+		WHERE manager_id IS NULL
+		ORDER BY id ASC
+	</select>
+
+	<!-- 查询有员工的部门 -->
+	<select id="selectDepartmentsWithStaff" resultMap="BaseResultMap">
+		SELECT DISTINCT d.id, d.Dname, d.manager_id, d.create_time
+		FROM departments d
+				 INNER JOIN staffs s ON d.id = s.dept_id
+		ORDER BY d.id ASC
+	</select>
+
+	<!-- 查询没有员工的部门 -->
+	<select id="selectDepartmentsWithoutStaff" resultMap="BaseResultMap">
+		SELECT d.id, d.Dname, d.manager_id, d.create_time
+		FROM departments d
+				 LEFT JOIN staffs s ON d.id = s.dept_id
+		WHERE s.id IS NULL
+		ORDER BY d.id ASC
+	</select>
+
+	<!-- 🔥 自定义批量删除 -->
+	<delete id="deleteBatch">
+		DELETE FROM departments WHERE id IN
+		<foreach collection="idList" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+
+
+</mapper>

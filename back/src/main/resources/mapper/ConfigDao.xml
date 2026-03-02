@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dao.ConfigDao">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.entity.ConfigEntity">
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="value" property="value" />
+        <result column="description" property="description" />
+    </resultMap>
+
+    <!-- 根据配置名称获取配置值 -->
+    <select id="getConfigValue" parameterType="string" resultType="string">
+        SELECT value FROM config WHERE name = #{name}
+    </select>
+
+    <!-- 获取薪资相关配置 -->
+    <select id="getSalaryConfigs" resultMap="BaseResultMap">
+        SELECT id, name, value, description
+        FROM config
+        WHERE name IN (
+                       'base_salary', 'work_days_per_month', 'overtime_rate',
+                       'work_start_time', 'work_end_time', 'late_threshold', 'early_threshold',
+                       'salary_calc_day'
+            )
+    </select>
+
+    <!-- 根据名称更新配置值 -->
+    <update id="updateConfig">
+        UPDATE config SET value = #{value} WHERE name = #{name}
+    </update>
+
+    <!-- 根据ID更新配置值 -->
+    <update id="updateConfigById">
+        UPDATE config SET value = #{value} WHERE id = #{id}
+    </update>
+
+    <!-- 自定义查询配置列表（带分页） -->
+    <select id="selectConfigPage" resultMap="BaseResultMap">
+        SELECT * FROM config
+        <where>
+            ${ew.sqlSegment}
+        </where>
+    </select>
+
+    <!-- 根据名称列表批量查询配置 -->
+    <select id="selectConfigsByNames" resultMap="BaseResultMap">
+        SELECT id, name, value, description
+        FROM config
+        WHERE name IN
+        <foreach collection="names" item="name" open="(" separator="," close=")">
+            #{name}
+        </foreach>
+    </select>
+
+</mapper>

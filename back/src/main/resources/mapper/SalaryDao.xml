@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dao.SalaryDao">
+
+    <!-- 薪资VO结果映射 - 添加新字段 -->
+    <resultMap id="SalaryVOResultMap" type="com.entity.vo.SalaryVO">
+        <id column="id" property="id" />
+        <result column="staff_id" property="staffId" />
+        <result column="staffSid" property="staffSid" />
+        <result column="sname" property="staffName" />
+        <result column="dname" property="deptName" />
+        <result column="jname" property="jobName" />
+        <result column="month" property="month" />
+        <result column="actual_base_pay" property="actualBasePay" />
+        <result column="overtime_pay" property="overtimePay" />
+        <result column="leave_days" property="leaveDays" />
+        <result column="leave_deduction" property="leaveDeduction" />
+        <result column="total_salary" property="totalSalary" />
+        <result column="status" property="status" />
+        <result column="calc_time" property="calcTime" />
+        <result column="remarks" property="remarks" />
+
+        <!-- 🔥 新增：考勤统计字段 -->
+        <result column="late_count" property="lateCount" />
+        <result column="early_leave_count" property="earlyLeaveCount" />
+        <result column="late_early_count" property="lateEarlyCount" />
+        <result column="missing_card_count" property="missingCardCount" />
+        <result column="absence_days" property="absenceDays" />
+        <result column="absence_deduction" property="absenceDeduction" />
+        <result column="late_deduction" property="lateDeduction" />
+        <result column="missing_card_deduction" property="missingCardDeduction" />
+        <result column="other_deduction" property="otherDeduction" />
+        <result column="other_deduction_remark" property="otherDeductionRemark" />
+    </resultMap>
+
+    <!-- 查询薪资列表 -->
+    <select id="selectSalaryList" parameterType="map" resultMap="SalaryVOResultMap">
+        SELECT
+        s.id,
+        s.staff_id,
+        st.Sid as staffSid,
+        st.Sname as sname,
+        d.Dname as dname,
+        j.Jname as jname,
+        s.month,
+        s.actual_base_pay,
+        s.overtime_pay,
+        s.leave_days,
+        s.leave_deduction,
+        s.total_salary,
+        s.status,
+        s.calc_time,
+        s.remarks
+        FROM salary s
+        LEFT JOIN staffs st ON s.staff_id = st.id
+        LEFT JOIN departments d ON st.dept_id = d.id
+        LEFT JOIN jobs j ON st.job_id = j.id
+        WHERE 1=1
+        <if test="staffId != null">
+            AND s.staff_id = #{staffId}
+        </if>
+        <if test="deptId != null">
+            AND st.dept_id = #{deptId}
+        </if>
+        <!-- 添加部门名称过滤 -->
+        <if test="deptName != null and deptName != ''">
+            AND d.Dname = #{deptName}
+        </if>
+        <if test="month != null">
+            AND DATE_FORMAT(s.month, '%Y-%m') = DATE_FORMAT(#{month}, '%Y-%m')
+        </if>
+        <if test="status != null and status != ''">
+            AND s.status = #{status}
+        </if>
+        <if test="staffName != null and staffName != ''">
+            AND st.Sname LIKE CONCAT('%', #{staffName}, '%')
+        </if>
+        <!-- 添加年份过滤 -->
+        <if test="year != null and year != ''">
+            AND YEAR(s.month) = #{year}
+        </if>
+        ORDER BY s.month DESC, st.Sname ASC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- 统计薪资记录数量 -->
+    <select id="countSalaryList" parameterType="map" resultType="int">
+        SELECT COUNT(*)
+        FROM salary s
+        LEFT JOIN staffs st ON s.staff_id = st.id
+        LEFT JOIN departments d ON st.dept_id = d.id
+        WHERE 1=1
+        <if test="staffId != null">
+            AND s.staff_id = #{staffId}
+        </if>
+        <if test="deptId != null">
+            AND st.dept_id = #{deptId}
+        </if>
+        <!-- 添加部门名称过滤 -->
+        <if test="deptName != null and deptName != ''">
+            AND d.Dname = #{deptName}
+        </if>
+        <if test="month != null">
+            AND DATE_FORMAT(s.month, '%Y-%m') = DATE_FORMAT(#{month}, '%Y-%m')
+        </if>
+        <if test="status != null and status != ''">
+            AND s.status = #{status}
+        </if>
+        <if test="staffName != null and staffName != ''">
+            AND st.Sname LIKE CONCAT('%', #{staffName}, '%')
+        </if>
+        <!-- 添加年份过滤 -->
+        <if test="year != null and year != ''">
+            AND YEAR(s.month) = #{year}
+        </if>
+    </select>
+
+    <!-- 专门用于检查月份是否已计算 -->
+    <select id="countByMonth" parameterType="string" resultType="int">
+        SELECT COUNT(*)
+        FROM salary
+        WHERE DATE_FORMAT(month, '%Y-%m') = #{month}
+    </select>
+
+    <!-- 根据ID查询薪资详情 - 增强版，包含考勤统计 -->
+    <select id="selectSalaryById" parameterType="long" resultMap="SalaryVOResultMap">
+        SELECT
+        s.id,
+        s.staff_id,
+        st.Sid as staffSid,
+        st.Sname as sname,
+        d.Dname as dname,
+        j.Jname as jname,
+        s.month,
+        s.actual_base_pay,
+        s.overtime_pay,
+        s.leave_days,
+        s.leave_deduction,
+        s.total_salary,
+        s.status,
+        s.calc_time,
+        s.remarks,
+        <!-- 🔥 新增：考勤统计数据查询 -->
+        COALESCE((
+        SELECT COUNT(*)
+        FROM attendance a
+        WHERE a.staff_id = s.staff_id
+        AND DATE_FORMAT(a.date, '%Y-%m') = DATE_FORMAT(s.month, '%Y-%m')
+        AND a.status = '迟到'
+        ), 0) as late_count,
+
+        COALESCE((
+        SELECT COUNT(*)
+        FROM attendance a
+        WHERE a.staff_id = s.staff_id
+        AND DATE_FORMAT(a.date, '%Y-%m') = DATE_FORMAT(s.month, '%Y-%m')
+        AND a.status = '早退'
+        ), 0) as early_leave_count,
+
+        COALESCE((
+        SELECT COUNT(*)
+        FROM attendance a
+        WHERE a.staff_id = s.staff_id
+        AND DATE_FORMAT(a.date, '%Y-%m') = DATE_FORMAT(s.month, '%Y-%m')
+        AND a.status = '迟到早退'
+        ), 0) as late_early_count,
+
+        COALESCE((
+        SELECT COUNT(*)
+        FROM attendance a
+        WHERE a.staff_id = s.staff_id
+        AND DATE_FORMAT(a.date, '%Y-%m') = DATE_FORMAT(s.month, '%Y-%m')
+        AND a.status = '缺卡'
+        ), 0) as missing_card_count,
+
+        COALESCE((
+        SELECT COUNT(*)
+        FROM attendance a
+        WHERE a.staff_id = s.staff_id
+        AND DATE_FORMAT(a.date, '%Y-%m') = DATE_FORMAT(s.month, '%Y-%m')
+        AND a.status = '缺勤'
+        ), 0) as absence_days,
+
+        <!-- 🔥 计算各种扣款金额 -->
+        COALESCE((
+        SELECT COUNT(*) * (s.actual_base_pay / (SELECT CAST(value AS UNSIGNED) FROM config WHERE name='work_days_per_month') / 8 * 0.5)
+        FROM attendance a
+        WHERE a.staff_id = s.staff_id
+        AND DATE_FORMAT(a.date, '%Y-%m') = DATE_FORMAT(s.month, '%Y-%m')
+        AND a.status = '缺卡'
+        ), 0) as missing_card_deduction,
+
+        COALESCE((
+        SELECT
+        (COUNT(CASE WHEN status = '迟到' THEN 1 END) * 0.02 +
+        COUNT(CASE WHEN status = '早退' THEN 1 END) * 0.02 +
+        COUNT(CASE WHEN status = '迟到早退' THEN 1 END) * 0.04) *
+        (s.actual_base_pay / (SELECT CAST(value AS UNSIGNED) FROM config WHERE name='work_days_per_month'))
+        FROM attendance a
+        WHERE a.staff_id = s.staff_id
+        AND DATE_FORMAT(a.date, '%Y-%m') = DATE_FORMAT(s.month, '%Y-%m')
+        AND a.status IN ('迟到', '早退', '迟到早退')
+        ), 0) as late_deduction,
+
+        <!-- 缺勤扣款已经在 leave_deduction 中包含了，这里设为0 -->
+        0 as absence_deduction,
+
+        <!-- 其他扣款：总扣款 - 已知扣款 -->
+        GREATEST(0,
+        (s.actual_base_pay + s.overtime_pay - s.total_salary) -
+        COALESCE(s.leave_deduction, 0) -
+        COALESCE((
+        SELECT COUNT(*) * (s.actual_base_pay / (SELECT CAST(value AS UNSIGNED) FROM config WHERE name='work_days_per_month') / 8 * 0.5)
+        FROM attendance a
+        WHERE a.staff_id = s.staff_id
+        AND DATE_FORMAT(a.date, '%Y-%m') = DATE_FORMAT(s.month, '%Y-%m')
+        AND a.status = '缺卡'
+        ), 0) -
+        COALESCE((
+        SELECT
+        (COUNT(CASE WHEN status = '迟到' THEN 1 END) * 0.02 +
+        COUNT(CASE WHEN status = '早退' THEN 1 END) * 0.02 +
+        COUNT(CASE WHEN status = '迟到早退' THEN 1 END) * 0.04) *
+        (s.actual_base_pay / (SELECT CAST(value AS UNSIGNED) FROM config WHERE name='work_days_per_month'))
+        FROM attendance a
+        WHERE a.staff_id = s.staff_id
+        AND DATE_FORMAT(a.date, '%Y-%m') = DATE_FORMAT(s.month, '%Y-%m')
+        AND a.status IN ('迟到', '早退', '迟到早退')
+        ), 0)
+        ) as other_deduction,
+
+        '考勤相关扣款' as other_deduction_remark
+
+        FROM salary s
+        LEFT JOIN staffs st ON s.staff_id = st.id
+        LEFT JOIN departments d ON st.dept_id = d.id
+        LEFT JOIN jobs j ON st.job_id = j.id
+        WHERE s.id = #{id}
+    </select>
+    <!-- 根据员工ID和月份删除薪资记录 -->
+    <delete id="deleteByStaffIdAndMonth">
+        DELETE FROM salary
+        WHERE staff_id = #{staffId}
+          AND DATE_FORMAT(month, '%Y-%m') = DATE_FORMAT(#{month}, '%Y-%m')
+    </delete>
+
+    <!-- 批量更新薪资状态 -->
+    <update id="batchUpdateStatus">
+        UPDATE salary
+        SET status = #{status}
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <!-- 调用薪资计算存储过程 -->
+    <select id="callCalculateSalary" statementType="CALLABLE">
+        {call calc_monthly_salary(#{month, mode=IN, jdbcType=VARCHAR})}
+    </select>
+
+    <!-- 专门用于导出查询 -->
+    <select id="selectSalaryForExport" parameterType="string" resultMap="SalaryVOResultMap">
+        SELECT
+            s.id,
+            s.staff_id,
+            st.Sid as staffSid,
+            st.Sname as sname,
+            d.Dname as dname,
+            j.Jname as jname,
+            s.month,
+            s.actual_base_pay,
+            s.overtime_pay,
+            s.leave_days,
+            s.leave_deduction,
+            s.total_salary,
+            s.status,
+            s.calc_time,
+            s.remarks
+        FROM salary s
+                 LEFT JOIN staffs st ON s.staff_id = st.id
+                 LEFT JOIN departments d ON st.dept_id = d.id
+                 LEFT JOIN jobs j ON st.job_id = j.id
+        WHERE DATE_FORMAT(s.month, '%Y-%m') = #{month}
+        ORDER BY st.dept_id, st.Sname
+    </select>
+
+    <!-- 新增：根据员工ID和年份查询薪资记录（用于个人统计） -->
+    <select id="selectSalaryByStaffAndYear" parameterType="map" resultMap="SalaryVOResultMap">
+        SELECT
+            s.id,
+            s.staff_id,
+            st.Sid as staffSid,
+            st.Sname as sname,
+            d.Dname as dname,
+            j.Jname as jname,
+            s.month,
+            s.actual_base_pay,
+            s.overtime_pay,
+            s.leave_days,
+            s.leave_deduction,
+            s.total_salary,
+            s.status,
+            s.calc_time,
+            s.remarks
+        FROM salary s
+                 LEFT JOIN staffs st ON s.staff_id = st.id
+                 LEFT JOIN departments d ON st.dept_id = d.id
+                 LEFT JOIN jobs j ON st.job_id = j.id
+        WHERE s.staff_id = #{staffId}
+                  AND YEAR(s.month) = #{year}
+        ORDER BY s.month DESC
+    </select>
+
+    <!-- 新增：查询员工月度薪资详情 -->
+    <select id="selectMonthlySalaryDetail" parameterType="map" resultMap="SalaryVOResultMap">
+        SELECT
+            s.id,
+            s.staff_id,
+            st.Sid as staffSid,
+            st.Sname as sname,
+            d.Dname as dname,
+            j.Jname as jname,
+            s.month,
+            s.actual_base_pay,
+            s.overtime_pay,
+            s.leave_days,
+            s.leave_deduction,
+            s.total_salary,
+            s.status,
+            s.calc_time,
+            s.remarks
+        FROM salary s
+                 LEFT JOIN staffs st ON s.staff_id = st.id
+                 LEFT JOIN departments d ON st.dept_id = d.id
+                 LEFT JOIN jobs j ON st.job_id = j.id
+        WHERE s.staff_id = #{staffId}
+          AND DATE_FORMAT(s.month, '%Y-%m') = #{month}
+            LIMIT 1
+    </select>
+
+</mapper>
